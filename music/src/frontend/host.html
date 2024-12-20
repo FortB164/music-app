@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host a Room</title>
+</head>
+<body>
+  <h1>Host a Room</h1>
+  <input id="roomId" placeholder="Enter Room ID" />
+  <button id="createRoom">Create Room</button>
+
+  <form id="uploadForm" style="display: none;">
+    <input type="file" name="file" accept="audio/mp3" />
+    <button type="submit">Upload MP3</button>
+  </form>
+
+  <div id="playlist"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    document.getElementById('createRoom').addEventListener('click', () => {
+      const roomId = document.getElementById('roomId').value.trim();
+      if (roomId) {
+        socket.emit('createRoom', roomId);
+        document.getElementById('uploadForm').style.display = 'block';
+      }
+    });
+
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      formData.append('roomId', document.getElementById('roomId').value.trim());
+
+      const res = await fetch('/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        alert('File uploaded successfully');
+      }
+    });
+
+    socket.on('playlistUpdated', (playlist) => {
+      document.getElementById('playlist').innerHTML = playlist.map(file => `<p>${file}</p>`).join('');
+    });
+  </script>
+</body>
+</html>
